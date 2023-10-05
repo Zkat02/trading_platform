@@ -1,8 +1,13 @@
 FROM python:3
+
+RUN pip install poetry
+
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-WORKDIR /code
-COPY requirements.txt /code/
-RUN pip install -r requirements.txt
-COPY . /code/
+WORKDIR /app
+COPY pyproject.toml poetry.lock /app/
+
+RUN poetry install
+
+COPY . /app/

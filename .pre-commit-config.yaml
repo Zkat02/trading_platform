@@ -10,15 +10,15 @@ repos:
     hooks:
       - id: black
   - repo: https://github.com/pycqa/flake8
-    rev: ''  # pick a git hash / tag to point to
+    rev: ''
     hooks:
       - id: flake8
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: ''  # Use the sha / tag you want to point at
+    rev: ''
     hooks:
       - id: mypy
   - repo: https://github.com/pre-commit/mirrors-isort
-    rev: ''  # Use the revision sha / tag you want to point at
+    rev: ''
     hooks:
       - id: isort
   - repo: local
@@ -30,6 +30,6 @@ repos:
         types: [ python ]
         args:
           [
-            "-rn", # Only display messages
-            "-sn", # Don't display the score
+            "-rn",
+            "-sn",
           ]
