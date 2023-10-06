@@ -3,10 +3,8 @@ services:
     image: postgres
     volumes:
       - ./data/db:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_DB=${SQL_DATABASE}
-      - POSTGRES_USER=${SQL_USER}
-      - POSTGRES_PASSWORD=${SQL_PASSWORD}
+    env_file:
+      - .env
   web:
     build: .
     command: ["./entrypoint.sh"]
@@ -14,9 +12,7 @@ services:
       - .:/code
     ports:
       - ${WEB_PORT}
-    environment:
-      - POSTGRES_DB=${SQL_DATABASE}
-      - POSTGRES_USER=${SQL_USER}
-      - POSTGRES_PASSWORD=${SQL_PASSWORD}
+    env_file:
+      - .env
     depends_on:
       - db
