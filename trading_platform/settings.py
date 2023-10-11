@@ -7,11 +7,11 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.environ.get('SECRET_KEY')
+SECRET_KEY = os.environ.get("SECRET_KEY")
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     "subscriptions.apps.SubscriptionsConfig",
     "orders.apps.OrdersConfig",
     "inventory.apps.InventoryConfig",
+    "stoks.apps.StoksConfig",
     "rest_framework",
 ]
 
@@ -58,13 +59,13 @@ TEMPLATES = [
 WSGI_APPLICATION = "trading_platform.wsgi.application"
 
 DATABASES = {
-    'default': {
-        'ENGINE':os.environ.get("SQL_ENGINE"),
-        'NAME': os.environ.get('SQL_DATABASE'),
-        'USER': os.environ.get('SQL_USER'),
-        'PASSWORD': os.environ.get('SQL_PASSWORD'),
-        'HOST': os.environ.get('SQL_HOST'),
-        'PORT': os.environ.get('SQL_PORT'),
+    "default": {
+        "ENGINE": os.environ.get("SQL_ENGINE"),
+        "NAME": os.environ.get("SQL_DATABASE"),
+        "USER": os.environ.get("SQL_USER"),
+        "PASSWORD": os.environ.get("SQL_PASSWORD"),
+        "HOST": os.environ.get("SQL_HOST"),
+        "PORT": os.environ.get("SQL_PORT"),
     }
 }
 
@@ -95,6 +96,14 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-REST_FRAMEWORK = {}
+REST_FRAMEWORK = {
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
+        "rest_framework.renderers.BrowsableAPIRenderer",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.AllowAny",
+    ],
+}
 
-AUTH_USER_MODEL = 'user_management.CustomUser'
+AUTH_USER_MODEL = "user_management.CustomUser"
