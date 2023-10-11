@@ -20,7 +20,10 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "user_managment.apps.UserManagmentConfig",
+    "user_management.apps.UserManagementConfig",
+    "subscriptions.apps.SubscriptionsConfig",
+    "orders.apps.OrdersConfig",
+    "inventory.apps.InventoryConfig",
     "rest_framework",
 ]
 
@@ -93,3 +96,5 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_FRAMEWORK = {}
+
+AUTH_USER_MODEL = 'user_management.CustomUser'

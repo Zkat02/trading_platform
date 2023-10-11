@@ -1,15 +1,18 @@
 services:
   db:
+    restart: always
     image: postgres
     volumes:
       - ./data/db:/var/lib/postgresql/data
     env_file:
       - .env
+    ports:
+      - ${POSTGRE_SQL_PORT}
   web:
     build: .
     command: ["./entrypoint.sh"]
     volumes:
-      - .:/code
+      - .:/app
     ports:
       - ${WEB_PORT}
     env_file:
