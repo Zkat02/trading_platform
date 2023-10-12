@@ -7,6 +7,7 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 COPY pyproject.toml poetry.lock /app/
+# COPY entrypoint.sh /app/
 
 RUN poetry install
 
