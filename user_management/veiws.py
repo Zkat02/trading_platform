@@ -33,6 +33,24 @@ class ObtainTokenView(views.APIView):
         return Response({"token": jwt_token})
 
 
+# class UserRegistrationView(views.APIView):
+#     queryset = CustomUser.objects.all()
+#     serializer_class = UserRegistrationSerializer
+#     permission_classes = [permissions.AllowAny]
+
+
+#     def post(self, request):
+#         serializer = UserRegistrationSerializer(data=request.data)
+#         if serializer.is_valid():
+#             user = serializer.save()
+#             user.set_password(user.password)
+#             user.save()
+#             jwt_token = JWTAuthentication.create_jwt(user)
+#             return Response(
+#                 {"message": "User registered successfully.", "user": user, "token": jwt_token},
+#                 status=status.HTTP_201_CREATED,
+#             )
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 class UserRegistrationView(views.APIView):
     queryset = CustomUser.objects.all()
     serializer_class = UserRegistrationSerializer
@@ -46,7 +64,11 @@ class UserRegistrationView(views.APIView):
             user.save()
             jwt_token = JWTAuthentication.create_jwt(user)
             return Response(
-                {"message": "User registered successfully.", "user": user, "token": jwt_token},
+                {
+                    "message": "User registered successfully.",
+                    "user": serializer.data,
+                    "token": jwt_token,
+                },
                 status=status.HTTP_201_CREATED,
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
