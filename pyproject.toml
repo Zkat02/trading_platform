@@ -46,20 +46,16 @@ build-backend = "poetry.core.masonry.api"
 [tool.black]
 line-length = 100
 
-[tool.flake8]
-ignore = ['E501',]
-max-line-length = 100
-
 [tool.isort]
 line_length = 100
 
 [tool.mypy]
 # Настройки для Mypy
 
-[tool.pylint.messages_control]
+# [tool.pylint.messages_control]
 
-disable = ["missing-module-docstring", "missing-class-docstring"]
-enable = ["unused-import"]
+# disable = ["missing-module-docstring", "missing-class-docstring"]
+# enable = ["unused-import"]
 
-[tool.pylint.format]
-max-line-length = 100
+# [tool.pylint.format]
+# max-line-length = 100
