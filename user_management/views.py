@@ -18,39 +18,24 @@ class ObtainTokenView(views.APIView):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        username_or_email = serializer.validated_data.get("username_or_email")
+        username = serializer.validated_data.get("username")
         password = serializer.validated_data.get("password")
 
-        user = User.objects.filter(username=username_or_email).first()
-        if user is None:
-            user = User.objects.filter(email=username_or_email).first()
+        try:
+            user = User.objects.get(username=username)
 
-        if user is None or not user.check_password(password):
-            return Response({"message": "Invalid credentials"}, status=status.HTTP_400_BAD_REQUEST)
+            if user is None or not user.check_password(password):
+                return Response(
+                    {"message": "Invalid credentials"}, status=status.HTTP_400_BAD_REQUEST
+                )
 
-        jwt_token = JWTAuthentication.create_jwt(user)
+            jwt_token = JWTAuthentication.create_jwt(user)
 
-        return Response({"token": jwt_token})
-
-
-# class UserRegistrationView(views.APIView):
-#     queryset = CustomUser.objects.all()
-#     serializer_class = UserRegistrationSerializer
-#     permission_classes = [permissions.AllowAny]
+            return Response({"token": jwt_token})
+        except User.DoesNotExist:
+            return Response({"error_message": f"User with {username} dont't exist"})
 
 
-#     def post(self, request):
-#         serializer = UserRegistrationSerializer(data=request.data)
-#         if serializer.is_valid():
-#             user = serializer.save()
-#             user.set_password(user.password)
-#             user.save()
-#             jwt_token = JWTAuthentication.create_jwt(user)
-#             return Response(
-#                 {"message": "User registered successfully.", "user": user, "token": jwt_token},
-#                 status=status.HTTP_201_CREATED,
-#             )
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 class UserRegistrationView(views.APIView):
     queryset = CustomUser.objects.all()
     serializer_class = UserRegistrationSerializer
@@ -72,3 +57,11 @@ class UserRegistrationView(views.APIView):
                 status=status.HTTP_201_CREATED,
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class GetBalanceView(views.APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        balance = request.user.balance
+        return Response({"balance": balance})

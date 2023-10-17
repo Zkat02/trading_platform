@@ -4,7 +4,7 @@ from user_management.models import CustomUser
 
 
 class ObtainTokenSerializer(serializers.Serializer):
-    username_or_email = serializers.CharField()
+    username = serializers.CharField()
     password = serializers.CharField()
 
 

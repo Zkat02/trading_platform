@@ -1,6 +1,6 @@
 from django.db import models
 
-from stoks.models import Stock
+from stocks.models import Stock
 from user_management.models import CustomUser
 
 

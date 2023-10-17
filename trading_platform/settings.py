@@ -25,7 +25,7 @@ INSTALLED_APPS = [
     "subscriptions.apps.SubscriptionsConfig",
     "orders.apps.OrdersConfig",
     "inventory.apps.InventoryConfig",
-    "stoks.apps.StoksConfig",
+    "stocks.apps.StocksConfig",
     "rest_framework",
 ]
 
@@ -113,7 +113,7 @@ REST_FRAMEWORK = {
 JWT_CONF = {
     "TOKEN_LIFETIME": timedelta(minutes=5),
     "TOKEN_REFRESH_LIFETIME": timedelta(days=1),
-    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_HEADER_TYPES": "Bearer",
     "ALGORITHM": "HS256",
 }
 
