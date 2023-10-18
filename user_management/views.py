@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from user_management.models import CustomUser
 
 from .authentication import JWTAuthentication
-from .serializers import ObtainTokenSerializer, UserRegistrationSerializer
+from .serializers import ObtainTokenSerializer, UserSerializer
 
 User = get_user_model()
 
@@ -33,16 +33,16 @@ class ObtainTokenView(views.APIView):
 
             return Response({"token": jwt_token})
         except User.DoesNotExist:
-            return Response({"error_message": f"User with {username} dont't exist"})
+            return Response({"error_message": f"User with username - {username} dont't exist"})
 
 
 class UserRegistrationView(views.APIView):
     queryset = CustomUser.objects.all()
-    serializer_class = UserRegistrationSerializer
+    serializer_class = UserSerializer
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
-        serializer = UserRegistrationSerializer(data=request.data)
+        serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
             user.set_password(user.password)
@@ -51,7 +51,6 @@ class UserRegistrationView(views.APIView):
             return Response(
                 {
                     "message": "User registered successfully.",
-                    "user": serializer.data,
                     "token": jwt_token,
                 },
                 status=status.HTTP_201_CREATED,
