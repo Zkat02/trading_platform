@@ -8,7 +8,7 @@ class ObtainTokenSerializer(serializers.Serializer):
     password = serializers.CharField()
 
 
-class UserRegistrationSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ("username", "password", "email", "role")

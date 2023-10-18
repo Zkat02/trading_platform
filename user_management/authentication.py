@@ -14,7 +14,7 @@ class JWTAuthentication(authentication.BaseAuthentication):
         jwt_token = request.META.get("HTTP_AUTHORIZATION")
         if jwt_token is None:
             return None
-        jwt_token = JWTAuthentication.get_the_token_from_header(jwt_token)
+        jwt_token = self.get_the_token_from_header(jwt_token)
         try:
             payload = jwt.decode(jwt_token, settings.SECRET_KEY, algorithms=["HS256"])
         except jwt.exceptions.InvalidSignatureError as exc:
@@ -23,11 +23,11 @@ class JWTAuthentication(authentication.BaseAuthentication):
             raise ParseError() from exc
         username = payload.get("user_identifier")
         if username is None:
-            raise AuthenticationFailed(f"user_identifier is empty in JWT")
+            raise AuthenticationFailed("user_identifier(username) is empty in JWT")
         try:
             user = User.objects.get(username=username)
-        except User.DoesNotExist:
-            raise AuthenticationFailed(f"User with username - {username} not found")
+        except User.DoesNotExist as exc:
+            raise AuthenticationFailed(f"User with username - {username} not found") from exc
         return user, payload
 
     @staticmethod
@@ -47,7 +47,6 @@ class JWTAuthentication(authentication.BaseAuthentication):
     def get_auth_header():
         return str(settings.JWT_CONF["AUTH_HEADER_TYPES"])
 
-    @staticmethod
-    def get_the_token_from_header(token):
-        token = token.replace(JWTAuthentication.get_auth_header(), "").replace(" ", "")
+    def get_the_token_from_header(self, token):
+        token = token.replace(self.get_auth_header(), "").replace(" ", "")
         return token

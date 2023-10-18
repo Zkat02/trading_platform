@@ -22,7 +22,6 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "user_management.apps.UserManagementConfig",
-    "subscriptions.apps.SubscriptionsConfig",
     "orders.apps.OrdersConfig",
     "inventory.apps.InventoryConfig",
     "stocks.apps.StocksConfig",
@@ -111,7 +110,7 @@ REST_FRAMEWORK = {
 }
 
 JWT_CONF = {
-    "TOKEN_LIFETIME": timedelta(minutes=5),
+    "TOKEN_LIFETIME": timedelta(days=10),  # timedelta(minutes=5),
     "TOKEN_REFRESH_LIFETIME": timedelta(days=1),
     "AUTH_HEADER_TYPES": "Bearer",
     "ALGORITHM": "HS256",

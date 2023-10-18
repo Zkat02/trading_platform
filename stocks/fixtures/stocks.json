@@ -1,0 +1,102 @@
+[
+  {
+      "model": "stocks.stock",
+      "pk": 1,
+      "fields": {
+          "name": "Stock 1",
+          "symbol": "STK1",
+          "price_per_unit_sail": "10.50",
+          "price_per_unit_buy": "9.50"
+      }
+  },
+  {
+      "model": "stocks.stock",
+      "pk": 2,
+      "fields": {
+          "name": "Stock 2",
+          "symbol": "STK2",
+          "price_per_unit_sail": "20.75",
+          "price_per_unit_buy": "19.00"
+      }
+  },
+  {
+      "model": "stocks.stock",
+      "pk": 3,
+      "fields": {
+          "name": "Stock 3",
+          "symbol": "STK3",
+          "price_per_unit_sail": "15.25",
+          "price_per_unit_buy": "14.00"
+      }
+  },
+  {
+      "model": "stocks.stock",
+      "pk": 4,
+      "fields": {
+          "name": "Stock 4",
+          "symbol": "STK4",
+          "price_per_unit_sail": "5.80",
+          "price_per_unit_buy": "6.20"
+      }
+  },
+  {
+      "model": "stocks.stock",
+      "pk": 5,
+      "fields": {
+          "name": "Stock 5",
+          "symbol": "STK5",
+          "price_per_unit_sail": "30.40",
+          "price_per_unit_buy": "28.90"
+      }
+  },
+  {
+      "model": "stocks.stock",
+      "pk": 6,
+      "fields": {
+          "name": "Stock 6",
+          "symbol": "STK6",
+          "price_per_unit_sail": "12.60",
+          "price_per_unit_buy": "13.20"
+      }
+  },
+  {
+      "model": "stocks.stock",
+      "pk": 7,
+      "fields": {
+          "name": "Stock 7",
+          "symbol": "STK7",
+          "price_per_unit_sail": "8.90",
+          "price_per_unit_buy": "9.10"
+      }
+  },
+  {
+      "model": "stocks.stock",
+      "pk": 8,
+      "fields": {
+          "name": "Stock 8",
+          "symbol": "STK8",
+          "price_per_unit_sail": "25.00",
+          "price_per_unit_buy": "24.50"
+      }
+  },
+  {
+      "model": "stocks.stock",
+      "pk": 9,
+      "fields": {
+          "name": "Stock 9",
+          "symbol": "STK9",
+          "price_per_unit_sail": "17.30",
+          "price_per_unit_buy": "16.80"
+      }
+  },
+  {
+      "model": "stocks.stock",
+      "pk": 10,
+      "fields": {
+          "name": "Stock 10",
+          "symbol": "STK10",
+          "price_per_unit_sail": "22.75",
+          "price_per_unit_buy": "21.50"
+      }
+  }
+]
