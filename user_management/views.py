@@ -2,10 +2,13 @@ from django.contrib.auth import get_user_model
 from rest_framework import permissions, status, views
 from rest_framework.response import Response
 
+from stocks.models import Stock
+from stocks.serializers import StockSerializer
 from user_management.models import CustomUser
+from user_management.permissions import IsUser
 
 from .authentication import JWTAuthentication
-from .serializers import ObtainTokenSerializer, UserRegistrationSerializer
+from .serializers import ObtainTokenSerializer, UserSerializer
 
 User = get_user_model()
 
@@ -33,16 +36,16 @@ class ObtainTokenView(views.APIView):
 
             return Response({"token": jwt_token})
         except User.DoesNotExist:
-            return Response({"error_message": f"User with {username} dont't exist"})
+            return Response({"error_message": f"User with username - {username} dont't exist"})
 
 
 class UserRegistrationView(views.APIView):
     queryset = CustomUser.objects.all()
-    serializer_class = UserRegistrationSerializer
+    serializer_class = UserSerializer
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
-        serializer = UserRegistrationSerializer(data=request.data)
+        serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
             user.set_password(user.password)
@@ -51,12 +54,22 @@ class UserRegistrationView(views.APIView):
             return Response(
                 {
                     "message": "User registered successfully.",
-                    "user": serializer.data,
                     "token": jwt_token,
                 },
                 status=status.HTTP_201_CREATED,
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UsersView(views.APIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAdmin]
+
+    def get(self, request):
+        users = User.objects.all()
+        serializer = UserSerializer(users, many=True)
+        return Response({"users": serializer.data})
 
 
 class GetBalanceView(views.APIView):
@@ -65,3 +78,26 @@ class GetBalanceView(views.APIView):
     def get(self, request):
         balance = request.user.balance
         return Response({"balance": balance})
+
+
+class SubscriptionsView(views.APIView):
+    permission_classes = [IsUser]
+
+    def get(self, request):
+        stocks = Stock.objects.filter(user=request.user)
+        serializer = StockSerializer(stocks, many=True)
+        return Response({"stocks": serializer.data})
+
+    def delete(self, request, pk):
+        try:
+            stock = Stock.objects.get(pk=pk)
+            if stock.user == request.user:
+                stock.user.remove(request.user)
+                return Response({"message": "Unsubscribed from the stock successfully"})
+            else:
+                return Response(
+                    {"error_message": "You are not subscribed to this stock."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        except Stock.DoesNotExist:
+            return Response({"error_message": "Stock not found"}, status=status.HTTP_404_NOT_FOUND)
