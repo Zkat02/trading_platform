@@ -1,14 +1,67 @@
-from django.shortcuts import render
-# from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model
+from rest_framework import permissions, status, views
+from rest_framework.response import Response
 
-# User = get_user_model()
+from user_management.models import CustomUser
+from user_management.permissions import IsUser
 
-# user = User.objects.create_user(username='user1', email='user1@example.com', password='password')
-# analyst = User.objects.create_user(username='analyst1', email='analyst1@example.com', password='password', role='analyst')
-# admin = User.objects.create_superuser(username='admin1', email='admin1@example.com', password='password', role='admin')
+from .authentication import JWTAuthentication
+from .serializers import ObtainTokenSerializer, UserSerializer
 
-def is_admin(user):
-    return user.role == 'admin'
+User = get_user_model()
 
-def is_analyst(user):
-    return user.role == 'analyst'
+
+class ObtainTokenView(views.APIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = ObtainTokenSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        username = serializer.validated_data.get("username")
+        password = serializer.validated_data.get("password")
+
+        try:
+            user = User.objects.get(username=username)
+
+            if user is None or not user.check_password(password):
+                return Response(
+                    {"message": "Invalid credentials"}, status=status.HTTP_400_BAD_REQUEST
+                )
+
+            jwt_token = JWTAuthentication.create_jwt(user)
+
+            return Response({"token": jwt_token})
+        except User.DoesNotExist:
+            return Response({"error_message": f"User with username - {username} dont't exist"})
+
+
+class UserRegistrationView(views.APIView):
+    queryset = CustomUser.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        serializer = UserSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            user.set_password(user.password)
+            user.save()
+            jwt_token = JWTAuthentication.create_jwt(user)
+            return Response(
+                {
+                    "message": "User registered successfully.",
+                    "token": jwt_token,
+                },
+                status=status.HTTP_201_CREATED,
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class GetBalanceView(views.APIView):
+    permission_classes = [IsUser]
+
+    def get(self, request):
+        balance = request.user.balance
+        return Response({"balance": balance})
