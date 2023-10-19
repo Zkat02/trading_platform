@@ -3,6 +3,7 @@ from rest_framework import permissions, status, views
 from rest_framework.response import Response
 
 from user_management.models import CustomUser
+from user_management.permissions import IsUser
 
 from .authentication import JWTAuthentication
 from .serializers import ObtainTokenSerializer, UserSerializer
@@ -59,7 +60,7 @@ class UserRegistrationView(views.APIView):
 
 
 class GetBalanceView(views.APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsUser]
 
     def get(self, request):
         balance = request.user.balance
