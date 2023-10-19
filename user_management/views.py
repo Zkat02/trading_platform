@@ -73,7 +73,7 @@ class UsersView(views.APIView):
 
 
 class GetBalanceView(views.APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsUser]
 
     def get(self, request):
         balance = request.user.balance
