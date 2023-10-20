@@ -68,25 +68,8 @@ class StockDetailView(views.APIView):
     def delete(self, request, pk):
         try:
             stock = Stock.objects.get(pk=pk)
-            # оповестить всех кто подпсан о удалении
+            # noticed all users who subscribed about delete stock
             stock.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         except Stock.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
-
-
-class SubscribeToStockView(views.APIView):
-    permission_classes = [IsUser]
-
-    def post(self, request, pk):
-        try:
-            stock = Stock.objects.get(pk=pk)
-        except Stock.DoesNotExist:
-            return Response(
-                {"error_message": "Stock/{pk} does't exist."}, status=status.HTTP_404_NOT_FOUND
-            )
-
-        user = request.user
-        user.subscriptions.add(stock)
-
-        return Response({"message": "Subscribed to stock successfully"})
