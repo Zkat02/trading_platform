@@ -19,3 +19,16 @@ services:
       - .env
     depends_on:
       - db
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+  celery:
+    build: .
+    volumes:
+      - .:/code
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
