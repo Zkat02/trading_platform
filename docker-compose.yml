@@ -1,3 +1,4 @@
+version: '3'
 services:
   db:
     restart: always
@@ -19,12 +20,26 @@ services:
       - .env
     depends_on:
       - db
+      - redis
+      - celery-worker
+      - celery-beat
   redis:
     image: redis:latest
     ports:
       - "6379:6379"
-  celery:
+  celery-worker:
     build: .
+    command: ["./celery-worker.sh"]
+    volumes:
+      - .:/code
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
+  celery-beat:
+    build: .
+    command: ["./celery-beat.sh"]
     volumes:
       - .:/code
     env_file:

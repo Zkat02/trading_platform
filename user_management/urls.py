@@ -16,7 +16,7 @@ urlpatterns = [
         name="subscriptions-list",
     ),
     path("admin/users/", UsersView.as_view(), name="users-list"),
-    path("admin/change_balance/<int:pk>", ChangeBalanceView.as_view(), name="change-balance"),
+    path("admin/change_balance/user/<int:pk>", ChangeBalanceView.as_view(), name="change-balance"),
     path("admin/user/block/<int:pk>", BlockUserView.as_view(), name="block-user"),
     path("admin/user/unlock/<int:pk>", UnlockUserView.as_view(), name="unlock-user"),
 ]

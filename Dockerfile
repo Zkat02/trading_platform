@@ -1,4 +1,4 @@
-FROM python:3
+FROM python:3.11
 
 RUN pip install poetry
 
@@ -11,4 +11,3 @@ COPY pyproject.toml poetry.lock /app/
 RUN poetry install
 
 COPY . /app/
-CMD ["poetry", "run", "celery", "-A", "trading_platform", "worker", "--loglevel=info"]

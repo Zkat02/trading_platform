@@ -110,10 +110,20 @@ REST_FRAMEWORK = {
 }
 
 JWT_CONF = {
-    "TOKEN_LIFETIME": timedelta(days=10),  # timedelta(minutes=5),
+    "TOKEN_LIFETIME": timedelta(days=10),
     "TOKEN_REFRESH_LIFETIME": timedelta(days=1),
     "AUTH_HEADER_TYPES": "Bearer",
     "ALGORITHM": "HS256",
 }
 
 AUTH_USER_MODEL = "user_management.CustomUser"
+
+EMAIL_BACKEND = os.environ.get("EMAIL_BACKEND")
+EMAIL_HOST = os.environ.get("EMAIL_HOST")
+EMAIL_PORT = os.environ.get("EMAIL_PORT")
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS")
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
+
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL")
+CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND")
