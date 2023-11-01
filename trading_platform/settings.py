@@ -107,6 +107,7 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "user_management.authentication.JWTAuthentication",
     ],
+    "COERCE_DECIMAL_TO_STRING": False,
 }
 
 JWT_CONF = {
@@ -127,3 +128,7 @@ EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
 
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL")
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND")
+
+CELERY_IMPORTS = [
+    "orders.tasks",
+]

@@ -1,9 +1,10 @@
-from rest_framework.exceptions import PermissionDenied
+from base.exceptions import Base4xxException
 
 
-class OrderDoNotCreated(PermissionDenied):
-    detail = "Order wasn't created."
+class OrderDoNotCreated(Base4xxException):
+    status_code = 402
+    default_detail = "Order wasn't created."
 
-    def __init__(self, error_message):
-        self.detail = error_message
-        super().__init__(self.detail)
+
+class OrderCanceled(Base4xxException):
+    default_detail = "Order wasn canceled."

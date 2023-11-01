@@ -1,42 +1,42 @@
 from celery import shared_task
 from django.core.mail import send_mail
 
-from orders.models import Order
-from orders.utils import close_order
+from orders.exceptions import OrderCanceled
+from orders.services import OrderService
+from stocks.services import StockService
 from trading_platform.settings import EMAIL_HOST_USER
+
+order_service = OrderService()
+stock_service = StockService()
 
 
 @shared_task
 def check_open_orders():
     print("celery_task: check_open_orders")
-    open_orders = Order.objects.filter(status="open", manual=False)
+
+    open_orders = order_service.filter_orders(status="open", manual=False)
+
     if open_orders.exists():
         for order in open_orders:
-            stock = order.stock
-            order_type = order.order_type
-            if order.user_action_type == "buy":
-                current_price = stock.price_per_unit_sail
-            if order.user_action_type == "sell":
-                current_price = stock.price_per_unit_buy
-            if order_type == "short":
-                if current_price <= order.price_limit:
-                    close_order(order)
-                    send_order_closed_notification.delay(order.id, current_price)
-            elif order_type == "long":
-                if current_price >= order.price_limit:
-                    close_order(order)
-                    send_order_closed_notification.delay(order.id, current_price)
+            if order_service.check_condition_for_close(order):
+                try:
+                    order_service.close_order(order)
+                except OrderCanceled as e:
+                    print(f"order_{order.id} canceled: {e.default_detail}")
+                finally:
+                    send_notification.delay(order_id=order.id)
 
 
 @shared_task
-def send_order_closed_notification(order_id, current_price):
-    order = Order.objects.get(id=order_id)
-    subject = "Closed order"
+def send_notification(order_id):
+    order = order_service.get_by_id(obj_id=order_id)
+    subject = f"Order {order.status}"
     message = (
-        f"Order on {order.user_action_type} {order.stock} in quantity {order.quantity} was closed.\n"
-        f"Total price: {current_price * order.quantity}.\n"
+        f"Order on {order.user_action_type} {order.stock} in quantity {order.quantity}\
+              was {order.status}.\n"
+        f"Closing price in moment of closing order: {order.closing_price}.\n"
         f"Your balance now: {order.user.balance}.\n"
-        f"Stock price in moment of closing order: {current_price}."
+        f"Stock price now: {stock_service.get_price(order.stock,order.user_action_type)}."
     )
 
     from_email = EMAIL_HOST_USER
