@@ -1,21 +1,23 @@
+from typing import Optional
+
 from rest_framework.exceptions import APIException
 
 
-class Base4xxException(APIException):
-    status_code = 400
-    default_detail = "Client Error occurred."
+class BaseClientException(APIException):
+    status_code: int = 400
+    default_detail: str = "Client Error occurred."
 
-    def __init__(self, detail=None, status_code=None):
+    def __init__(self, detail: Optional[str] = None, status_code: Optional[int] = None) -> None:
         super().__init__(detail)
         if status_code is not None:
             self.status_code = status_code
 
 
-class Base5xxException(APIException):
-    status_code = 500
-    default_detail = "Server Error occurred."
+class BaseServerException(APIException):
+    status_code: int = 500
+    default_detail: str = "Server Error occurred."
 
-    def __init__(self, detail=None, status_code=None):
+    def __init__(self, detail: Optional[str] = None, status_code: Optional[int] = None) -> None:
         super().__init__(detail)
         if status_code is not None:
             self.status_code = status_code

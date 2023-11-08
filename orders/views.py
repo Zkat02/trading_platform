@@ -13,8 +13,8 @@ order_service = OrderService()
 
 class OrderList(ListAPIView):
     """
-    Get list of all orders.
-    Allow only for admin or analyst
+    Retrieve a list of all orders.
+    Allowed only for admin or analyst.
     """
 
     permission_classes = [IsAdminOrAnalyst]
@@ -24,8 +24,8 @@ class OrderList(ListAPIView):
 
 class UserOrderList(ListAPIView):
     """
-    Get list of user orders by his id.
-    Allow only for admin or analyst
+    Retrieve a list of orders for a specific user by their ID.
+    Allowed only for admin or analyst.
     """
 
     permission_classes = [IsAdminOrAnalyst]
@@ -33,39 +33,55 @@ class UserOrderList(ListAPIView):
 
     def get_queryset(self):
         user_id = self.kwargs["user_id"]
-        return order_service.filter_orders(user=user_id)
+        return order_service.filter_objs(user=user_id)
 
 
 class CurrentUserOrderList(ListAPIView):
     """
-    Get list of current user's orders.
-    Allow only for user
+    Retrieve a list of orders for the current user.
+    Allowed only for the user.
     """
 
     permission_classes = [IsUser]
     serializer_class = OrderSerializer
 
     def get_queryset(self):
-        return order_service.filter_orders(user=self.request.user)
+        return order_service.filter_objs(user=self.request.user)
 
 
 class CancelOrderView(RetrieveAPIView):
-    queryset = Order.objects.all()
+    """
+    Retrieve an order and if status is open, cancel it.
+
+    Allowed only for user created this order.
+    """
+
     serializer_class = OrderSerializer
     permission_classes = [CanCancelOrder]
 
-    def perform_update(self, serializer):
-        if serializer.instance.status == "open":
-            serializer.instance.status = "canceled"
-            serializer.instance.save()
+    def put(self, request, pk):
+        order = order_service.get_by_id(obj_id=pk)
+        if order_service.can_cancel_order(order=order):
+            order_service.cancel_order(order=order)
+            return Response(
+                {
+                    "message": "Order canceled successfully",
+                    "order": self.serializer_class(order).data,
+                },
+                status=status.HTTP_200_OK,
+            )
+        else:
+            return Response(
+                {"message": "Order cannot be canceled", "order": self.serializer_class(order).data},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
 
 class CreateOrderView(APIView):
     """
-    User buy stock by price price_per_unit_sail.
+    Create a new order for buying stocks.
 
-    User can create order only for himself.
-    Admin can create order for all users by his user_id followed in parametrs in body.
+    Users can create orders for themselves. Admins can create orders for any user by providing the user_id in the request body.
     """
 
     serializer_class = CreateOrderSerializer
@@ -75,10 +91,14 @@ class CreateOrderView(APIView):
         serializer = self.serializer_class(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
 
-        message = order_service.create_order(**serializer.data)
+        order = order_service.create_order(**serializer.data)
+
+        if order.status == Order.ORDER_STATUS.CLOSED:
+            message = f"Order closed successfully. Closing price {order.closing_price}."
+        if order.status == Order.ORDER_STATUS.OPEN:
+            message = "We notice you by mail when order will be closed."
+
         return Response(
-            {
-                "message": message,
-            },
+            {"message": message, "order": OrderSerializer(order).data},
             status=status.HTTP_201_CREATED,
         )

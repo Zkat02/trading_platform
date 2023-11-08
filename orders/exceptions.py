@@ -1,10 +1,10 @@
-from base.exceptions import Base4xxException
+from base.exceptions import BaseClientException
 
 
-class OrderDoNotCreated(Base4xxException):
+class OrderNotCreated(BaseClientException):
     status_code = 402
     default_detail = "Order wasn't created."
 
 
-class OrderCanceled(Base4xxException):
+class OrderCanceled(BaseClientException):
     default_detail = "Order wasn canceled."

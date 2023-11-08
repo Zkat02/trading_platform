@@ -69,30 +69,30 @@ class TestCheckConditionForClose(unittest.TestCase):
     def test_long_sell_condition(self):
         # Проверка условия для долгой продажи, ждем пока цена упадет
         self.stock.price_per_unit_buy = 120
-        self.assertFalse(self.order_service.check_condition_for_close(self.order_long_sell))
+        self.assertFalse(self.order_service.is_ready_to_close(self.order_long_sell))
         self.stock.price_per_unit_buy = 80
-        self.assertTrue(self.order_service.check_condition_for_close(self.order_long_sell))
+        self.assertTrue(self.order_service.is_ready_to_close(self.order_long_sell))
 
     def test_long_buy_condition(self):
         # Проверка условия для долгой покупки, ждем пока цена упадет
         self.stock.price_per_unit_sail = 130
-        self.assertFalse(self.order_service.check_condition_for_close(self.order_long_buy))
+        self.assertFalse(self.order_service.is_ready_to_close(self.order_long_buy))
         self.stock.price_per_unit_sail = 80
-        self.assertTrue(self.order_service.check_condition_for_close(self.order_long_buy))
+        self.assertTrue(self.order_service.is_ready_to_close(self.order_long_buy))
 
     def test_short_buy_condition(self):
         # Проверка условия для быстрой покупки, ждем пока цена акции вырастет до лимита
         self.stock.price_per_unit_sail = 80
-        self.assertFalse(self.order_service.check_condition_for_close(self.order_short_buy))
+        self.assertFalse(self.order_service.is_ready_to_close(self.order_short_buy))
         self.stock.price_per_unit_sail = 130
-        self.assertTrue(self.order_service.check_condition_for_close(self.order_short_buy))
+        self.assertTrue(self.order_service.is_ready_to_close(self.order_short_buy))
 
     def test_short_sell_condition(self):
         # Проверка условия для быстрой продажи, ждем пока цена акции вырастет до лимита
         self.stock.price_per_unit_buy = 80
-        self.assertFalse(self.order_service.check_condition_for_close(self.order_short_sell))
+        self.assertFalse(self.order_service.is_ready_to_close(self.order_short_sell))
         self.stock.price_per_unit_buy = 130
-        self.assertTrue(self.order_service.check_condition_for_close(self.order_short_sell))
+        self.assertTrue(self.order_service.is_ready_to_close(self.order_short_sell))
 
     def tearDown(self):
         self.user.delete()
