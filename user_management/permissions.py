@@ -8,7 +8,6 @@ class IsAuthenticated(BasePermission):
         if request.user.is_authenticated:
             if request.user.is_active:
                 return True
-            raise UserBlockedException()
         return False
 
 
@@ -17,7 +16,6 @@ class IsUser(BasePermission):
         if request.user.is_authenticated:
             if request.user.is_active:
                 return request.user.role == "user"
-            raise UserBlockedException()
         return False
 
 
@@ -26,7 +24,6 @@ class IsAnalyst(BasePermission):
         if request.user.is_authenticated:
             if request.user.is_active:
                 return request.user.role == "analyst"
-            raise UserBlockedException()
         return False
 
 
@@ -35,7 +32,6 @@ class IsAdmin(BasePermission):
         if request.user.is_superuser:
             if request.user.is_active:
                 return request.user.role == "admin"
-            raise UserBlockedException()
         return False
 
 
@@ -59,8 +55,6 @@ class CanCancelOrder(BasePermission):
             if request.user.is_active:
                 if request.user.is_superuser and request.user.role == "admin":
                     return True
-
                 if obj.user == request.user:
                     return True
                 return False
-            raise UserBlockedException()

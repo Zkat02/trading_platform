@@ -1,19 +1,19 @@
 from rest_framework.exceptions import PermissionDenied
 
-from base.exceptions import Base4xxException
+from base.exceptions import BaseClientException
 
 
-class AuthenticationFailedException(Base4xxException):
+class AuthenticationFailedException(BaseClientException):
     status_code = 401
     default_detail = "Authentication failed."
 
 
-class ChangeBalanceException(Base4xxException):
+class ChangeBalanceException(BaseClientException):
     status_code = 402
     default_detail = "Balance was not changed."
 
 
-class SubtractBalanceException(Base4xxException):
+class SubtractBalanceException(BaseClientException):
     status_code = 402
     default_detail = "Insufficient balance."
 
@@ -22,9 +22,9 @@ class UserBlockedException(PermissionDenied):
     default_detail = "User is blocked."
 
 
-class DoNotBlockException(Base4xxException):
+class DoNotBlockException(BaseClientException):
     default_detail = "User do not blocked."
 
 
-class DoNotUnlockException(Base4xxException):
-    default_detail = "User do not unlocked."
+class DoNotUnblockException(BaseClientException):
+    default_detail = "User do not unblocked."
