@@ -70,18 +70,18 @@ class CancelOrderView(RetrieveAPIView):
                 },
                 status=status.HTTP_200_OK,
             )
-        else:
-            return Response(
-                {"message": "Order cannot be canceled", "order": self.serializer_class(order).data},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        return Response(
+            {"message": "Order cannot be canceled", "order": self.serializer_class(order).data},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
 
 class CreateOrderView(APIView):
     """
     Create a new order for buying stocks.
 
-    Users can create orders for themselves. Admins can create orders for any user by providing the user_id in the request body.
+    Users can create orders for themselves. Admins can create orders for
+    any user by providing the user_id in the request body.
     """
 
     serializer_class = CreateOrderSerializer

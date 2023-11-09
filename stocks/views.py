@@ -2,8 +2,6 @@ from rest_framework import status, views
 from rest_framework.permissions import AllowAny, IsAdminUser
 from rest_framework.response import Response
 
-from user_management.permissions import IsUser
-
 from .models import Stock
 from .serializers import StockSerializer
 
@@ -12,8 +10,6 @@ class StockView(views.APIView):
     def get_permissions(self):
         if self.request.method == "GET":
             return [AllowAny()]
-        elif self.request.method == "POST":
-            return [IsAdminUser()]
         return [IsAdminUser()]
 
     def get(self, request):
@@ -39,8 +35,6 @@ class StockDetailView(views.APIView):
     def get_permissions(self):
         if self.request.method == "GET":
             return [AllowAny()]
-        elif self.request.method in ("PUT", "DELETE"):
-            return [IsAdminUser()]
         return [IsAdminUser()]
 
     def get(self, request, pk):
@@ -59,7 +53,7 @@ class StockDetailView(views.APIView):
         except Stock.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
-        serializer = StockSerializer(stock, data=request.data)
+        serializer = StockSerializer(stock, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)

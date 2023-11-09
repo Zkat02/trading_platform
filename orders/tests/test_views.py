@@ -2,10 +2,9 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.test import APIClient, APIRequestFactory, force_authenticate
+from rest_framework.test import APIClient
 
 from orders.models import Order
-from orders.serializers import OrderSerializer
 from orders.services import OrderService
 from orders.tasks import check_open_orders
 from orders.views import (CancelOrderView, CreateOrderView, CurrentUserOrderList, OrderList,
@@ -22,8 +21,6 @@ class BaseOrderTestCase(TestCase):
     user_service = UserService()
 
     def setUp(self):
-        self.factory = APIRequestFactory()
-
         admin_user_data = {
             "username": "admin_test",
             "password": "admin_password",
@@ -151,7 +148,7 @@ class CancelOrderViewTestCase(BaseOrderTestCase):
 
         response = client.put(reverse("cancel-order", kwargs={"pk": order_id}))
 
-        order = self.order_service.get_by_id(obj_id=order_id)
+        order = self.order_service.get_by_id(order_id)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(order.status, Order.ORDER_STATUS.CANCELED)
@@ -165,7 +162,7 @@ class CancelOrderViewTestCase(BaseOrderTestCase):
 
         response = client.put(reverse("cancel-order", kwargs={"pk": order_id}))
 
-        order = self.order_service.get_by_id(obj_id=order_id)
+        order = self.order_service.get_by_id(order_id)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(order.status, Order.ORDER_STATUS.CLOSED)
@@ -180,7 +177,7 @@ class CancelOrderViewTestCase(BaseOrderTestCase):
 
         response = client.put(reverse("cancel-order", kwargs={"pk": order_id}))
 
-        order = self.order_service.get_by_id(obj_id=order_id)
+        order = self.order_service.get_by_id(order_id)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(order.status, Order.ORDER_STATUS.CANCELED)
@@ -194,7 +191,7 @@ class CancelOrderViewTestCase(BaseOrderTestCase):
 
         response = client.put(reverse("cancel-order", kwargs={"pk": order_id}))
 
-        order = self.order_service.get_by_id(obj_id=order_id)
+        order = self.order_service.get_by_id(order_id)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(order.status, Order.ORDER_STATUS.CLOSED)
@@ -321,7 +318,7 @@ class CreateOrderViewTestCase(BaseOrderTestCase):
         task.get()
         self.assertEqual(task.state, "SUCCESS")
 
-        order = self.order_service.get_by_id(obj_id=order_id)
+        order.refresh_from_db()
         order_status_after_cancel = order.status
 
         end_balance = self.user_service.get_user_balance(self.user.id)
@@ -357,15 +354,13 @@ class CreateOrderViewTestCase(BaseOrderTestCase):
 
         self.stock.price_per_unit_sail = 80
         self.stock.save()
-        order = self.order_service.get_by_id(obj_id=order_id)
+        order.refresh_from_db()
 
         task = check_open_orders.apply()
         task.get()
         self.assertEqual(task.state, "SUCCESS")
 
-        order = self.order_service.get_by_id(obj_id=order_id)
-        # order.refresh_from_db()
-        # order.refresh_from_db() return None????
+        order.refresh_from_db()
 
         order_closing_price = order.closing_price
         order_status_after_close = order.status
