@@ -1,17 +1,19 @@
-from django.contrib.auth import get_user_model
+from typing import Type
+
+from django.core.exceptions import ObjectDoesNotExist
+
 from base.repositories import BaseRepository
 from user_management.exceptions import AuthenticationFailedException, SubtractBalanceException
-from django.core.exceptions import ObjectDoesNotExist
-from typing import Union
+from user_management.models import CustomUser as User
 
-User = get_user_model()
 
 class UserRepository(BaseRepository):
     """
     Repository handling database operations related to the User model.
     """
-    def __init__(self):
-        super().__init__(model=User)
+
+    def __init__(self, model: Type[User]):
+        super().__init__(model=model)
 
     def get_user_by_username(self, username: str) -> User:
         """
@@ -31,7 +33,7 @@ class UserRepository(BaseRepository):
         except ObjectDoesNotExist:
             raise AuthenticationFailedException(f"User with username - <{username}> not found")
 
-    def create_user(self, username: str, password: str, role: str, email: str = None) -> User:
+    def create_user(self, username: str, password: str, role: str, email: str = "") -> User:
         """
         Create a new user.
 
@@ -44,7 +46,9 @@ class UserRepository(BaseRepository):
         Returns:
         - User: The created user object.
         """
-        user = self.model.objects.create_user(username=username, password=password, email=email, role=role)
+        user = self.model.objects.create_user(
+            username=username, password=password, email=email, role=role
+        )
         return user
 
     def update_user_password(self, user: User, new_password: str) -> User:
@@ -121,7 +125,8 @@ class UserRepository(BaseRepository):
         - Union[int, float]: The updated balance of the user.
         """
         new_balance = user.balance + value_to_add
-        return self.set_new_balance(user, new_balance)
+        self.set_new_balance(user, new_balance)
+        return new_balance
 
     def subtract_from_balance(self, user: User, value_to_subtract: float) -> float:
         """
@@ -140,4 +145,5 @@ class UserRepository(BaseRepository):
         if user.balance < value_to_subtract:
             raise SubtractBalanceException("Insufficient balance.")
         new_balance = user.balance - value_to_subtract
-        return self.set_new_balance(user, new_balance)
+        self.set_new_balance(user, new_balance)
+        return new_balance

@@ -2,10 +2,10 @@ import logging
 from typing import Optional
 
 from base.services import BaseService
+from inventory.services import InventoryService
 from orders.exceptions import OrderCanceled, OrderNotCreated
 from orders.models import Order
 from orders.repositories import OrderRepository
-from orders.serializers import OrderSerializer
 from stocks.services import StockService
 from user_management.exceptions import SubtractBalanceException
 from user_management.services import UserService
@@ -18,9 +18,10 @@ class OrderService(BaseService):
         """Initialize OrderService instance."""
         self.user_service = UserService()
         self.stock_service = StockService()
+        self.inventory_service = InventoryService()
         super().__init__(model=Order, repository=OrderRepository)
 
-    def create_order(self, **kwargs) -> Optional[Order]:
+    def create_order(self, **kwargs) -> Order:
         """
         Create a new order based on provided parameters.
 
@@ -38,8 +39,8 @@ class OrderService(BaseService):
         Returns:
         Optional[Order]: The created order if successful, otherwise None.
         """
-        user_id = kwargs.get("user_id")
-        stock_id = kwargs.get("stock_id")
+        user_id: int = kwargs.get("user_id")
+        stock_id: int = kwargs.get("stock_id")
         quantity = kwargs.get("quantity")
         user_action_type = kwargs.get("user_action_type")
         order_type = kwargs.get("order_type")
@@ -49,14 +50,22 @@ class OrderService(BaseService):
         user = self.user_service.get_by_id(obj_id=user_id)
         stock = self.stock_service.get_by_id(obj_id=stock_id)
 
-        data_to_check = {
+        data_to_check_balance = {
             "quantity": quantity,
             "user_action_type": user_action_type,
             "stock": stock,
             "user": user,
             "price_limit": price_limit,
         }
-        self.check_user_balance(**data_to_check)
+        self.check_user_balance(**data_to_check_balance)
+
+        data_to_check_stock_quantity = {
+            "quantity": quantity,
+            "user_action_type": user_action_type,
+            "user": user,
+            "stock": stock,
+        }
+        self.check_stock_available_quantity(**data_to_check_stock_quantity)
 
         order = self.repository.create(
             user=user,
@@ -104,11 +113,45 @@ class OrderService(BaseService):
         Optional[float]: The user balance after close.
         """
 
+        # transaction
+        self.calculate_stock_quantity(order)
         balance = self.calculate_user_balance(order)
+        #
         stock = order.stock
         closing_price = self.stock_service.get_price(stock=stock, action=order.user_action_type)
         self.repository.close_order(order, closing_price)
         return balance
+
+    def check_stock_available_quantity(self, **kwargs) -> bool:
+        """
+        Check if the stock is available for user action.
+
+        Args:
+        **kwargs: Arguments for checking user balance:
+
+            - stock: Stock object.
+            - quantity: Integer, quantity of stock.
+            - user_action_type: String, user action type (buy or sell).
+
+        Returns:
+        bool: True if the stock has enough available_quantity to create the order,
+        otherwise raises OrderNotCreated.
+        """
+
+        stock = kwargs.get("stock")
+        quantity = kwargs.get("quantity")
+        user_action_type = kwargs.get("user_action_type")
+        user = kwargs.get("user")
+
+        if user_action_type == Order.USER_ACTION_TYPE.SELL:
+            if self.inventory_service.can_sell_stock(
+                stock_id=stock.id, user_id=user.id, quantity=quantity
+            ):
+                return True
+            raise OrderNotCreated("Order not created: you own not enought stock quantity for sell.")
+        if self.stock_service.can_buy(stock=stock, quantity=quantity):
+            return True
+        raise OrderNotCreated("Order not created: stock available_quantity not enought for buy.")
 
     def check_user_balance(self, **kwargs) -> bool:
         """
@@ -143,7 +186,7 @@ class OrderService(BaseService):
         if user_action_type == "buy":
             if user.balance >= quantity * stock_sell_price:
                 return True
-            raise OrderNotCreated("Order do not create: insufficient balance.")
+            raise OrderNotCreated("Order not create: insufficient balance.")
         raise OrderNotCreated('Field user_action_type is not "buy" or "sell".')
 
     def calculate_user_balance(self, order: Order) -> Optional[float]:
@@ -169,6 +212,48 @@ class OrderService(BaseService):
         elif order.user_action_type == "sell":
             total_price = order.quantity * order.stock.price_per_unit_buy
             return self.user_service.add_to_balance(order.user.id, total_price)
+        raise OrderNotCreated('Order not created: field <user_action_type> is not "buy" or "sell".')
+
+    def calculate_stock_quantity(self, order: Order) -> None:
+        """
+        Calculate stock available quantity based on the order.
+
+        Args:
+        order (Order): The order for which to calculate the stock's quantity.
+
+        Returns:
+        Optional[int]: The updated quantity if the action was successful, otherwise None.
+        """
+
+        if order.user_action_type == Order.USER_ACTION_TYPE.BUY:
+            if self.stock_service.can_buy(stock=order.stock, quantity=order.quantity):
+                # transaction
+                self.inventory_service.add_quantity(
+                    stock_id=order.stock.id, user_id=order.user.id, quantity=order.quantity
+                )
+                new_value = order.stock.available_quantity - order.quantity
+                # end
+                return self.stock_service.set_available_quantity(
+                    stock=order.stock, new_value=new_value
+                )
+            self.cancel_order(order)
+            raise OrderCanceled("Order canceled: stock available quantity not enought for order.")
+
+        if order.user_action_type == Order.USER_ACTION_TYPE.SELL:
+            if self.inventory_service.can_sell_stock(
+                stock_id=order.stock.id, user_id=order.user.id, quantity=order.quantity
+            ):
+                # transaction
+                self.inventory_service.subtract_quantity(
+                    stock_id=order.stock.id, user_id=order.user.id, quantity=order.quantity
+                )
+                new_value = order.stock.available_quantity + order.quantity
+                # end
+                return self.stock_service.set_available_quantity(
+                    stock=order.stock, new_value=new_value
+                )
+            self.cancel_order(order)
+            raise OrderCanceled("Order canceled: stock available quantity not enought for order.")
         raise OrderNotCreated('Order not created: field <user_action_type> is not "buy" or "sell".')
 
     def order_cancel_notification(self, order: Order) -> None:

@@ -1,10 +1,13 @@
+from typing import Type
+
 from base.repositories import BaseRepository
 from orders.models import Order
 
 
 class OrderRepository(BaseRepository):
-    def __init__(self):
-        super().__init__(model=Order)
+    def __init__(self, model: Type[Order]):
+        super().__init__(model=model)
+
     def set_status(self, order: Order, status: Order.ORDER_TYPE) -> None:
         """
         Set the status of an order using the specified ORDER_TYPE.

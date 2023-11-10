@@ -1,16 +1,18 @@
+from typing import Optional, Union
+
 from base.services import BaseService
 from user_management.authentication import JWTAuthentication
-from user_management.exceptions import AuthenticationFailedException, ChangeBalanceException, DoNotBlockException, DoNotUnblockException
+from user_management.exceptions import (AuthenticationFailedException, DoNotBlockException,
+                                        DoNotUnblockException)
+from user_management.models import CustomUser as User
 from user_management.repositories import UserRepository
-from django.contrib.auth import get_user_model
-from typing import Union
 
-User = get_user_model()
 
 class UserService(BaseService):
     """
     Service for handling user-related operations.
     """
+
     def __init__(self):
         super().__init__(model=User, repository=UserRepository)
 
@@ -40,10 +42,14 @@ class UserService(BaseService):
         Returns:
         - User: The registered user.
         """
-        user = self.repository.create_user(username=username, password=password, email=email, role=role)
+        user = self.repository.create_user(
+            username=username, password=password, email=email, role=role
+        )
         return user
 
-    def reset_password(self, username: str, old_password: str, new_password: str, confirm_new_password: str) -> User:
+    def reset_password(
+        self, username: str, old_password: str, new_password: str, confirm_new_password: str
+    ) -> User:
         """
         Reset the user's password.
 
@@ -62,9 +68,13 @@ class UserService(BaseService):
         user = self.repository.get_user_by_username(username)
         if user and user.check_password(old_password):
             if new_password != confirm_new_password:
-                raise AuthenticationFailedException("Invalid <new_password> not equal <confirm_new_password>.")
+                raise AuthenticationFailedException(
+                    "Invalid <new_password> not equal <confirm_new_password>."
+                )
             if new_password == old_password:
-                raise AuthenticationFailedException("Invalid <new_password> is equal <old_password>.")
+                raise AuthenticationFailedException(
+                    "Invalid <new_password> is equal <old_password>."
+                )
             return self.repository.update_user_password(user, new_password)
         raise AuthenticationFailedException("Invalid old_password.")
 
@@ -133,7 +143,12 @@ class UserService(BaseService):
         balance = self.repository.get_user_balance(user)
         return balance
 
-    def change_balance(self, user_id: int, new_balance: Union[int, float] = None, value_to_add: Union[int, float] = None) -> Union[int, float]:
+    def change_balance(
+        self,
+        user_id: int,
+        new_balance: Optional[Union[int, float]] = None,
+        value_to_add: Optional[Union[int, float]] = None,
+    ) -> Union[int, float]:
         """
         Change the balance of a user.
 
@@ -181,7 +196,9 @@ class UserService(BaseService):
         balance = self.repository.add_to_balance(user, value_to_add)
         return balance
 
-    def subtract_from_balance(self, user_id: int, value_to_subtract: Union[int, float]) -> Union[int, float]:
+    def subtract_from_balance(
+        self, user_id: int, value_to_subtract: Union[int, float]
+    ) -> Union[int, float]:
         """
         Subtract a value from the balance of a user by their user ID.
 

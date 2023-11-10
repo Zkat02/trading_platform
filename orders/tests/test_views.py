@@ -4,6 +4,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
+from inventory.services import InventoryService
 from orders.models import Order
 from orders.services import OrderService
 from orders.tasks import check_open_orders
@@ -58,7 +59,11 @@ class BaseOrderTestCase(TestCase):
         )
 
         self.stock = Stock.objects.create(
-            name="test Stock 1", symbol="tFS1", price_per_unit_sail=120, price_per_unit_buy=110
+            name="test Stock 1",
+            symbol="tFS1",
+            price_per_unit_sail=120,
+            price_per_unit_buy=110,
+            available_quantity=10,
         )
 
 
@@ -201,16 +206,24 @@ class CreateOrderViewTestCase(BaseOrderTestCase):
     view = CreateOrderView.as_view()
     order_service = OrderService()
     stock_service = StockService()
+    inventory_service = InventoryService()
 
     def setUp(self):
         super().setUp()
 
-        self.manual_order_data = {
+        self.manual_buy_order_data = {
             "user_id": self.user.id,
             "stock_id": self.stock.id,
             "quantity": 1,
             "manual": True,
             "user_action_type": "buy",
+        }
+        self.manual_sell_order_data = {
+            "user_id": self.user.id,
+            "stock_id": self.stock.id,
+            "quantity": 3,
+            "manual": True,
+            "user_action_type": "sell",
         }
         self.auto_order_long_buy_data = {
             "user_id": self.user.id,
@@ -224,68 +237,198 @@ class CreateOrderViewTestCase(BaseOrderTestCase):
 
         celery_app.conf.update(CELERY_ALWAYS_EAGER=True)
 
-    def test_create_manual_order_insufficient_balance(self):
+    def test_create_manual_buy_order_insufficient_balance(self):
         start_balance = 0
         self.user_service.set_new_balance(self.user.id, start_balance)
 
+        start_stock_available_quantity = self.stock.available_quantity
+
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION="Bearer " + self.user_jwt_token)
-        response = client.post(
-            "http://localhost:8000/api/orders/create/", data=self.manual_order_data
-        )
+        response = client.post(reverse("create-order"), data=self.manual_buy_order_data)
 
         response_data = response.json()
 
+        self.user.refresh_from_db()
+        self.stock.refresh_from_db()
+
         end_balance = self.user_service.get_user_balance(self.user.id)
 
+        end_stock_available_quantity = self.stock.available_quantity
+
         self.assertEqual(start_balance, end_balance)
-        # stock quantity check
-        self.assertEqual(response_data.get("detail"), "Order do not create: insufficient balance.")
+        self.assertEqual(start_stock_available_quantity, end_stock_available_quantity)
+        self.assertEqual(response_data.get("detail"), "Order not create: insufficient balance.")
         self.assertEqual(response.status_code, status.HTTP_402_PAYMENT_REQUIRED)
 
-    def test_create_manual_order_insufficient_balance_quantity(self):
+    def test_create_manual_buy_order_insufficient_balance_to_buy_big_quantity(self):
         start_balance = 200
         self.user_service.set_new_balance(self.user.id, start_balance)
 
-        manual_order_data = dict(self.manual_order_data)
-        manual_order_data["quantity"] = 10
+        start_stock_available_quantity = self.stock.available_quantity
+
+        manual_buy_order_data = dict(self.manual_buy_order_data)
+        manual_buy_order_data["quantity"] = 9
 
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION="Bearer " + self.user_jwt_token)
-        response = client.post("http://localhost:8000/api/orders/create/", data=manual_order_data)
 
+        response = client.post(reverse("create-order"), data=manual_buy_order_data)
         response_data = response.json()
 
+        self.user.refresh_from_db()
+        self.stock.refresh_from_db()
         end_balance = self.user_service.get_user_balance(self.user.id)
+        end_stock_available_quantity = self.stock.available_quantity
 
         self.assertEqual(start_balance, end_balance)
-        # stock quantity check
-        self.assertEqual(response_data.get("detail"), "Order do not create: insufficient balance.")
+        self.assertEqual(start_stock_available_quantity, end_stock_available_quantity)
+        self.assertEqual(response_data.get("detail"), "Order not create: insufficient balance.")
         self.assertEqual(response.status_code, status.HTTP_402_PAYMENT_REQUIRED)
 
-    def test_create_manual_order_enought_balance(self):
+    def test_create_manual_buy_order_insufficient_stock_available_quantity(self):
+        start_balance = 100000
+        self.user_service.set_new_balance(self.user.id, start_balance)
+
+        start_stock_available_quantity = self.stock.available_quantity
+
+        manual_buy_order_data = dict(self.manual_buy_order_data)
+        manual_buy_order_data["quantity"] = 20
+
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION="Bearer " + self.user_jwt_token)
+
+        response = client.post(reverse("create-order"), data=manual_buy_order_data)
+        response_data = response.json()
+
+        self.user.refresh_from_db()
+        self.stock.refresh_from_db()
+        end_balance = self.user_service.get_user_balance(self.user.id)
+        end_stock_available_quantity = self.stock.available_quantity
+
+        self.assertEqual(start_balance, end_balance)
+        self.assertEqual(start_stock_available_quantity, end_stock_available_quantity)
+        self.assertEqual(
+            response_data.get("detail"),
+            "Order not created: stock available_quantity not enought for buy.",
+        )
+        self.assertEqual(response.status_code, status.HTTP_402_PAYMENT_REQUIRED)
+
+    def test_create_manual_sell_order_insufficient_stock_quantity_in_inventory(self):
+        inventory_data = {
+            "user": self.user,
+            "stock": self.stock,
+            "quantity": 1,
+        }
+        inventory = self.inventory_service.create(**inventory_data)
+
+        start_balance = 100000
+        self.user_service.set_new_balance(self.user.id, start_balance)
+
+        start_stock_available_quantity = self.stock.available_quantity
+
+        start_inventory_quantity = inventory.quantity
+
+        manual_sell_order_data = dict(self.manual_sell_order_data)
+        manual_sell_order_data["quantity"] = 20
+
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION="Bearer " + self.user_jwt_token)
+
+        response = client.post(reverse("create-order"), data=manual_sell_order_data)
+        response_data = response.json()
+
+        self.user.refresh_from_db()
+        self.stock.refresh_from_db()
+        inventory.refresh_from_db()
+        end_balance = self.user_service.get_user_balance(self.user.id)
+        end_stock_available_quantity = self.stock.available_quantity
+        end_inventory_quantity = inventory.quantity
+
+        self.assertEqual(response.status_code, status.HTTP_402_PAYMENT_REQUIRED)
+        self.assertEqual(
+            response_data.get("detail"),
+            "Order not created: you own not enought stock quantity for sell.",
+        )
+        self.assertEqual(start_balance, end_balance)
+        self.assertEqual(start_stock_available_quantity, end_stock_available_quantity)
+        self.assertEqual(start_inventory_quantity, end_inventory_quantity)
+
+    def test_create_manual_buy_order_OK(self):
         start_balance = 200
         self.user_service.set_new_balance(self.user.id, start_balance)
 
+        start_stock_available_quantity = self.stock.available_quantity
+
+        start_inventory_quantity = 10
+        inventory_data = {
+            "user": self.user,
+            "stock": self.stock,
+            "quantity": start_inventory_quantity,
+        }
+        inventory = self.inventory_service.create(**inventory_data)
+
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION="Bearer " + self.user_jwt_token)
-        response = client.post(
-            "http://localhost:8000/api/orders/create/", data=self.manual_order_data
-        )
+        response = client.post(reverse("create-order"), data=self.manual_buy_order_data)
 
-        response_data = response.json()
-        order = response_data.get("order")
-        order_status = order.get("status")
-        order_closing_price = order.get("closing_price")
+        self.assertIn("order", response.data)
+        order_id = response.data.get("order").get("id")
+        order = self.order_service.get_by_id(order_id)
 
+        self.user.refresh_from_db()
+        self.stock.refresh_from_db()
         end_balance = self.user_service.get_user_balance(self.user.id)
+        end_stock_available_quantity = self.stock.available_quantity
 
-        self.assertEqual(order_closing_price, (start_balance - end_balance))
-        # stock quantity check
-        self.assertEqual(order_status, Order.ORDER_STATUS.CLOSED)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(order.status, Order.ORDER_STATUS.CLOSED)
+        self.assertEqual(order.closing_price * order.quantity, (start_balance - end_balance))
+        self.assertEqual(
+            order.quantity, (start_stock_available_quantity - end_stock_available_quantity)
+        )
 
-    def test_create_auto_order_canceled(self):
+        inventory.refresh_from_db()
+        self.assertEqual(order.quantity, (inventory.quantity - start_inventory_quantity))
+
+    def test_create_manual_sell_order_OK(self):
+        start_balance = 200
+        self.user_service.set_new_balance(self.user.id, start_balance)
+
+        start_stock_available_quantity = self.stock.available_quantity
+
+        start_inventory_quantity = 10
+        inventory_data = {
+            "user": self.user,
+            "stock": self.stock,
+            "quantity": start_inventory_quantity,
+        }
+        inventory = self.inventory_service.create(**inventory_data)
+
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION="Bearer " + self.user_jwt_token)
+        response = client.post(reverse("create-order"), data=self.manual_sell_order_data)
+
+        self.assertIn("order", response.data)
+        order_id = response.data.get("order").get("id")
+        order = self.order_service.get_by_id(order_id)
+
+        self.user.refresh_from_db()
+        self.stock.refresh_from_db()
+        end_balance = self.user_service.get_user_balance(self.user.id)
+        end_stock_available_quantity = self.stock.available_quantity
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(order.status, Order.ORDER_STATUS.CLOSED)
+        self.assertEqual((start_balance + order.closing_price * order.quantity), end_balance)
+        self.assertEqual(
+            order.quantity, (end_stock_available_quantity - start_stock_available_quantity)
+        )
+
+        inventory.refresh_from_db()
+        self.assertEqual(order.quantity, (start_inventory_quantity - inventory.quantity))
+
+    def test_create_auto_long_buy_order_canceled(self):
         # Проверка условия для долгой продажи, ждем пока цена упадет
         self.stock_service.update(self.stock.id, price_per_unit_sail=120)
 
@@ -326,7 +469,7 @@ class CreateOrderViewTestCase(BaseOrderTestCase):
         self.assertEqual(not_enough_balance, end_balance)
         self.assertEqual(order_status_after_cancel, Order.ORDER_STATUS.CANCELED)
 
-    def test_create_auto_order_closed(self):
+    def test_create_auto_long_buy_order_OK(self):
         # Проверка условия для долгой продажи, ждем пока цена упадет
 
         self.stock_service.update(self.stock.id, price_per_unit_sail=120)
@@ -334,38 +477,55 @@ class CreateOrderViewTestCase(BaseOrderTestCase):
         start_balance = 1000
         self.user_service.set_new_balance(self.user.id, start_balance)
 
+        start_stock_available_quantity = self.stock.available_quantity
+
+        start_inventory_quantity = 10
+        inventory_data = {
+            "user": self.user,
+            "stock": self.stock,
+            "quantity": start_inventory_quantity,
+        }
+        inventory = self.inventory_service.create(**inventory_data)
+
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION="Bearer " + self.user_jwt_token)
         response = client.post(
             "http://localhost:8000/api/orders/create/", data=self.auto_order_long_buy_data
         )
 
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIn("order", response.data)
         response_data = response.json()
-        order = response_data.get("order")
-        order_id = order.get("id")
+        order_id = response_data.get("order").get("id")
         order = self.order_service.get_by_id(obj_id=order_id)
 
+        self.user.refresh_from_db()
+        self.stock.refresh_from_db()
         mid_balance = self.user_service.get_user_balance(self.user.id)
 
-        self.assertEqual(start_balance, mid_balance)
-        # stock quantity check
         self.assertEqual(order.status, Order.ORDER_STATUS.OPEN)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(start_balance, mid_balance)
+        self.assertEqual(start_stock_available_quantity, self.stock.available_quantity)
 
         self.stock.price_per_unit_sail = 80
         self.stock.save()
-        order.refresh_from_db()
 
+        order.refresh_from_db()
         task = check_open_orders.apply()
         task.get()
         self.assertEqual(task.state, "SUCCESS")
 
         order.refresh_from_db()
-
-        order_closing_price = order.closing_price
-        order_status_after_close = order.status
+        self.user.refresh_from_db()
+        self.stock.refresh_from_db()
+        inventory.refresh_from_db()
 
         end_balance = self.user_service.get_user_balance(self.user.id)
+        end_stock_available_quantity = self.stock.available_quantity
 
-        self.assertEqual(order_closing_price, (start_balance - end_balance))
-        self.assertEqual(order_status_after_close, Order.ORDER_STATUS.CLOSED)
+        self.assertEqual(order.closing_price, (start_balance - end_balance))
+        self.assertEqual(order.status, Order.ORDER_STATUS.CLOSED)
+        self.assertEqual(
+            order.quantity, (start_stock_available_quantity - end_stock_available_quantity)
+        )
+        self.assertEqual(order.quantity, (inventory.quantity - start_inventory_quantity))

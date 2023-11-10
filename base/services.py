@@ -10,7 +10,7 @@ class BaseService:
         self.repository = repository(model)
 
     def get_by_id(self, obj_id: int) -> Model:
-        return self.repository.get_by_id(obj_id)
+        return self.repository.get_by_id(obj_id=obj_id)
 
     def get_all(self) -> QuerySet[Model]:
         return self.repository.get_all()
@@ -23,12 +23,9 @@ class BaseService:
         self.repository.update(obj, **kwargs)
         return obj
 
-    def delete(self, obj_id: int) -> bool:
+    def delete(self, obj_id: int) -> None:
         obj = self.get_by_id(obj_id)
-        if obj:
-            self.repository.delete(obj)
-            return True
-        return False
+        self.repository.delete(obj)
 
     def filter_objs(self, **kwargs) -> QuerySet[Model]:
         return self.repository.filter_objs(**kwargs)

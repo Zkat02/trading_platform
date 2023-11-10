@@ -2,23 +2,11 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.test import APIClient, APIRequestFactory, force_authenticate
+from rest_framework.test import APIClient
 
-from orders.models import Order
-from orders.serializers import OrderSerializer
-from orders.services import OrderService
-from orders.tasks import check_open_orders
-from orders.views import (
-    CancelOrderView,
-    CreateOrderView,
-    CurrentUserOrderList,
-    OrderList,
-    UserOrderList,
-)
 from stocks.models import Stock
 from stocks.serializers import StockSerializer
 from stocks.services import StockService
-from trading_platform.celery import app as celery_app
 from user_management.services import UserService
 
 User = get_user_model()
@@ -66,7 +54,11 @@ class BaseUserTestCase(TestCase):
         )
 
         self.stock = Stock.objects.create(
-            name="test Stock 1", symbol="tFS1", price_per_unit_sail=120, price_per_unit_buy=110
+            name="test Stock 1",
+            symbol="tFS1",
+            price_per_unit_sail=120,
+            price_per_unit_buy=110,
+            available_quantity=10,
         )
 
 
@@ -85,7 +77,6 @@ class ObtainTokenViewTestCase(BaseUserTestCase):
 
         response_data = response.data
         self.assertIn("token", response_data)
-        self.user_jwt_token = response_data.get("token")
 
 
 class UserRegistrationViewTestCase(BaseUserTestCase):
@@ -120,7 +111,6 @@ class ResetPasswordViewTestCase(BaseUserTestCase):
 
         response_data = response.data
         self.assertIn("new_token", response_data)
-        self.user_jwt_token = response_data.get("new_token")
 
 
 class UsersViewTestCase(BaseUserTestCase):
@@ -229,14 +219,15 @@ class ChangeBalanceViewTestCase(BaseUserTestCase):
 
 
 class SubscriptionsViewTestCase(BaseUserTestCase):
-
     def test_get_empty_list_of_subscriptions(self):
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION="Bearer " + self.user_jwt_token)
 
         response = client.get(reverse("subscriptions-list"))
 
-        list_subs = self.user.subscriptions#self.user.subscriptions if self.user.subscriptions.exists() else []
+        list_subs = (
+            self.user.subscriptions
+        )  # self.user.subscriptions if self.user.subscriptions.exists() else []
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("stocks", response.data)
@@ -248,7 +239,7 @@ class SubscriptionsViewTestCase(BaseUserTestCase):
     def test_get_not_empty_list_of_subscriptions(self):
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION="Bearer " + self.user_jwt_token)
-        
+
         stock_id = self.stock.id
         self.stock_service.create_subscription(self.user.id, stock_id)
 
@@ -287,7 +278,7 @@ class SubscribeToStockViewTestCase(BaseUserTestCase):
         response = client.delete(reverse("subscribe-to-stock", kwargs={"pk": stock_id}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["message"], "Unsubscribed from the stock successfully.")
-        
+
         self.user.refresh_from_db()
         list_subs = self.user.subscriptions
-        self.assertEqual(StockSerializer(list_subs, many=True).data,[])
+        self.assertEqual(StockSerializer(list_subs, many=True).data, [])

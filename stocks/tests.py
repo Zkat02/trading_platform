@@ -68,6 +68,7 @@ class StockViewTests(BaseStockTestCase):
             "symbol": "tFS1",
             "price_per_unit_sail": 110,
             "price_per_unit_buy": 70,
+            "available_quantity": 10,
         }
 
         response = client.post(reverse("all-stocks"), data=stock_data)
@@ -88,6 +89,7 @@ class StockDetailViewTests(BaseStockTestCase):
             "symbol": "tFS1",
             "price_per_unit_sail": 110,
             "price_per_unit_buy": 70,
+            "available_quantity": 10,
         }
         stock = Stock.objects.create(**stock_data)
         update_data = {"name": "Updated Stock"}
@@ -104,6 +106,7 @@ class StockDetailViewTests(BaseStockTestCase):
             "symbol": "tFS1",
             "price_per_unit_sail": 110,
             "price_per_unit_buy": 70,
+            "available_quantity": 10,
         }
         stock = Stock.objects.create(**stock_data)
         update_data = {"name": "Updated Stock"}
@@ -123,6 +126,7 @@ class StockDetailViewTests(BaseStockTestCase):
             "symbol": "tFS1",
             "price_per_unit_sail": 110,
             "price_per_unit_buy": 70,
+            "available_quantity": 10,
         }
         stock = Stock.objects.create(**stock_data)
 

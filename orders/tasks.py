@@ -4,18 +4,17 @@ from celery import shared_task
 from django.core.mail import send_mail
 
 from orders.exceptions import OrderCanceled
-from orders.serializers import OrderSerializer
 from orders.services import OrderService
 from stocks.services import StockService
 from trading_platform.settings import EMAIL_HOST_USER
 
 logger = logging.getLogger(__name__)
-order_service = OrderService()
-stock_service = StockService()
 
 
 @shared_task
 def check_open_orders():
+    order_service = OrderService()
+
     logger.info("[INFO] celery_task: check_open_orders")
 
     open_orders = order_service.filter_objs(status="open", manual=False)
@@ -34,6 +33,9 @@ def check_open_orders():
 
 @shared_task
 def send_notification(order_id):
+    order_service = OrderService()
+    stock_service = StockService()
+
     order = order_service.get_by_id(obj_id=order_id)
     subject = f"Order {order.status}"
     message = (

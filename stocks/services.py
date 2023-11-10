@@ -108,7 +108,7 @@ class StockService(BaseService):
             return stock.price_per_unit_sail
         raise PriceNotExist()
 
-    def set_price(self, stock: Stock, action: Literal["sell", "buy"], new_value: float) -> float:
+    def set_price(self, stock: Stock, action: Literal["sell", "buy"], new_value: float) -> None:
         """
         Set the price based on the action.
 
@@ -118,7 +118,7 @@ class StockService(BaseService):
         - new_value (float): new price.
 
         Returns:
-        - float: Price of the stock based on the action.
+        - None.
 
         Raises:
         - PriceNotExist: If the action is not 'sell' or 'buy'.
@@ -127,3 +127,43 @@ class StockService(BaseService):
             return self.repository.set_price_per_unit_buy(stock, new_value)
         if action == "buy":
             return self.repository.set_price_per_unit_sail(stock, new_value)
+
+    def can_buy(self, stock: Stock, quantity: int) -> bool:
+        """
+        Check available_quantity before buy.
+
+        Args:
+        - stock (Stock): The stock object.
+        - quantity (int): Quantity for buy.
+
+        Returns:
+        - True: available_quantity enough.
+        - False: available_quantity not enough.
+        """
+        if stock.available_quantity >= quantity:
+            return True
+        return False
+
+    def set_available_quantity(self, stock: Stock, new_value: int) -> None:
+        """
+        Check available_quantity before buy.
+
+        Args:
+        - stock (Stock): The stock object.
+        - quantity (int): Quantity for buy.
+
+        Returns:
+        - True: available_quantity enought.
+        - False: available_quantity not enought.
+        """
+        """
+        Set new value to available_quantity.
+
+        Args:
+        - stock (Stock): The stock object.
+        - new_value (int): new quantity.
+
+        Returns:
+        - None
+        """
+        return self.repository.set_available_quantity(stock, new_value)

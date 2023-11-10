@@ -7,7 +7,6 @@ django.setup()
 from orders.models import Order  # noqa: E402
 from orders.services import OrderService  # noqa: E402
 from stocks.models import Stock  # noqa: E402
-from stocks.services import StockService  # noqa: E402
 from user_management.models import CustomUser  # noqa: E402
 
 
@@ -17,7 +16,11 @@ class TestCheckConditionForClose(unittest.TestCase):
             username="tuser1", email="user1@example.com", password="password1"
         )
         self.stock = Stock.objects.create(
-            name="tStock 1", symbol="FS1", price_per_unit_sail=120, price_per_unit_buy=110
+            name="tStock 1",
+            symbol="FS1",
+            price_per_unit_sail=120,
+            price_per_unit_buy=110,
+            available_quantity=10,
         )
 
         self.order_long_sell = Order.objects.create(

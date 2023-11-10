@@ -6,6 +6,7 @@ class Stock(models.Model):
     symbol = models.CharField(max_length=10, unique=True)
     price_per_unit_sail = models.DecimalField(max_digits=10, decimal_places=2)
     price_per_unit_buy = models.DecimalField(max_digits=10, decimal_places=2)
+    available_quantity = models.PositiveIntegerField()
 
     def __str__(self):
         return f"{self.name}"
