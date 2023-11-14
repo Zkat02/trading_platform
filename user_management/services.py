@@ -2,8 +2,11 @@ from typing import Optional, Union
 
 from base.services import BaseService
 from user_management.authentication import JWTAuthentication
-from user_management.exceptions import (AuthenticationFailedException, DoNotBlockException,
-                                        DoNotUnblockException)
+from user_management.exceptions import (
+    AuthenticationFailedException,
+    DoNotBlockException,
+    DoNotUnblockException,
+)
 from user_management.models import CustomUser as User
 from user_management.repositories import UserRepository
 
@@ -63,7 +66,8 @@ class UserService(BaseService):
         - User: The user with the updated password.
 
         Raises:
-        - AuthenticationFailedException: If the old password is invalid or other password-related issues.
+        - AuthenticationFailedException: If the old password is invalid or
+        other password-related issues.
         """
         user = self.repository.get_user_by_username(username)
         if user and user.check_password(old_password):
@@ -148,7 +152,7 @@ class UserService(BaseService):
         user_id: int,
         new_balance: Optional[Union[int, float]] = None,
         value_to_add: Optional[Union[int, float]] = None,
-    ) -> Union[int, float]:
+    ) -> None:
         """
         Change the balance of a user.
 
@@ -158,15 +162,16 @@ class UserService(BaseService):
         - value_to_add (Union[int, float], optional): The value to be added to the balance.
 
         Returns:
-        - Union[int, float]: The updated balance of the user.
+        - None.
         """
         if new_balance is not None:
-            balance = self.set_new_balance(user_id, new_balance)
+            self.set_new_balance(user_id, new_balance)
+            return
         if value_to_add is not None:
-            balance = self.add_to_balance(user_id, value_to_add)
-        return balance
+            self.add_to_balance(user_id, value_to_add)
+            return
 
-    def set_new_balance(self, user_id: int, new_balance: Union[int, float]) -> Union[int, float]:
+    def set_new_balance(self, user_id: int, new_balance: Union[int, float]) -> None:
         """
         Set a new balance for a user by their user ID.
 
@@ -175,13 +180,12 @@ class UserService(BaseService):
         - new_balance (Union[int, float]): The new balance to be set.
 
         Returns:
-        - Union[int, float]: The new balance of the user.
+        - None.
         """
         user = self.repository.get_by_id(user_id)
-        balance = self.repository.set_new_balance(user, new_balance)
-        return balance
+        self.repository.set_new_balance(user, new_balance)
 
-    def add_to_balance(self, user_id: int, value_to_add: Union[int, float]) -> Union[int, float]:
+    def add_to_balance(self, user_id: int, value_to_add: Union[int, float]) -> None:
         """
         Add a value to the balance of a user by their user ID.
 
@@ -190,15 +194,12 @@ class UserService(BaseService):
         - value_to_add (Union[int, float]): The value to be added to the balance.
 
         Returns:
-        - Union[int, float]: The updated balance of the user.
+        - None.
         """
         user = self.repository.get_by_id(user_id)
-        balance = self.repository.add_to_balance(user, value_to_add)
-        return balance
+        self.repository.add_to_balance(user, value_to_add)
 
-    def subtract_from_balance(
-        self, user_id: int, value_to_subtract: Union[int, float]
-    ) -> Union[int, float]:
+    def subtract_from_balance(self, user_id: int, value_to_subtract: None) -> None:
         """
         Subtract a value from the balance of a user by their user ID.
 
@@ -207,14 +208,13 @@ class UserService(BaseService):
         - value_to_subtract (Union[int, float]): The value to be subtracted from the balance.
 
         Returns:
-        - Union[int, float]: The updated balance of the user.
+        - None.
 
         Raises:
         - SubtractBalanceException: If the user has an insufficient balance.
         """
         user = self.repository.get_by_id(user_id)
-        balance = self.repository.subtract_from_balance(user, value_to_subtract)
-        return balance
+        self.repository.subtract_from_balance(user, value_to_subtract)
 
     def authentificate_user(self, username: str, password: str) -> str:
         """

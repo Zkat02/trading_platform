@@ -30,8 +30,10 @@ class UserRepository(BaseRepository):
         """
         try:
             return self.model.objects.get(username=username)
-        except ObjectDoesNotExist:
-            raise AuthenticationFailedException(f"User with username - <{username}> not found")
+        except ObjectDoesNotExist as e:
+            raise AuthenticationFailedException(
+                f"User with username - <{username}> not found"
+            ) from e
 
     def create_user(self, username: str, password: str, role: str, email: str = "") -> User:
         """
@@ -98,7 +100,7 @@ class UserRepository(BaseRepository):
         """
         return user.balance
 
-    def set_new_balance(self, user: User, new_balance: float) -> float:
+    def set_new_balance(self, user: User, new_balance: float) -> None:
         """
         Set a new balance for a user.
 
@@ -111,9 +113,8 @@ class UserRepository(BaseRepository):
         """
         user.balance = new_balance
         user.save()
-        return new_balance
 
-    def add_to_balance(self, user: User, value_to_add: float) -> float:
+    def add_to_balance(self, user: User, value_to_add: float) -> None:
         """
         Add a value to the balance of a user.
 
@@ -126,9 +127,8 @@ class UserRepository(BaseRepository):
         """
         new_balance = user.balance + value_to_add
         self.set_new_balance(user, new_balance)
-        return new_balance
 
-    def subtract_from_balance(self, user: User, value_to_subtract: float) -> float:
+    def subtract_from_balance(self, user: User, value_to_subtract: float) -> None:
         """
         Subtract a value from the balance of a user.
 
@@ -146,4 +146,3 @@ class UserRepository(BaseRepository):
             raise SubtractBalanceException("Insufficient balance.")
         new_balance = user.balance - value_to_subtract
         self.set_new_balance(user, new_balance)
-        return new_balance

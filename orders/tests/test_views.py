@@ -8,8 +8,13 @@ from inventory.services import InventoryService
 from orders.models import Order
 from orders.services import OrderService
 from orders.tasks import check_open_orders
-from orders.views import (CancelOrderView, CreateOrderView, CurrentUserOrderList, OrderList,
-                          UserOrderList)
+from orders.views import (
+    CancelOrderView,
+    CreateOrderView,
+    CurrentUserOrderList,
+    OrderList,
+    UserOrderList,
+)
 from stocks.models import Stock
 from stocks.services import StockService
 from trading_platform.celery import app as celery_app
@@ -433,6 +438,8 @@ class CreateOrderViewTestCase(BaseOrderTestCase):
         self.stock_service.update(self.stock.id, price_per_unit_sail=120)
 
         start_balance = 1000
+        start_stock_available_quantity = self.stock.available_quantity
+
         self.user_service.set_new_balance(self.user.id, start_balance)
 
         client = APIClient()
@@ -447,9 +454,10 @@ class CreateOrderViewTestCase(BaseOrderTestCase):
         order = self.order_service.get_by_id(obj_id=order_id)
 
         mid_balance = self.user_service.get_user_balance(self.user.id)
+        mid_stock_available_quantity = self.stock.available_quantity
 
         self.assertEqual(start_balance, mid_balance)
-        # stock quantity check
+        self.assertEqual(mid_stock_available_quantity, start_stock_available_quantity)
         self.assertEqual(order.status, Order.ORDER_STATUS.OPEN)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -462,11 +470,14 @@ class CreateOrderViewTestCase(BaseOrderTestCase):
         self.assertEqual(task.state, "SUCCESS")
 
         order.refresh_from_db()
-        order_status_after_cancel = order.status
+        self.stock.refresh_from_db()
 
+        order_status_after_cancel = order.status
         end_balance = self.user_service.get_user_balance(self.user.id)
+        end_stock_available_quantity = self.stock.available_quantity
 
         self.assertEqual(not_enough_balance, end_balance)
+        self.assertEqual(end_stock_available_quantity, start_stock_available_quantity)
         self.assertEqual(order_status_after_cancel, Order.ORDER_STATUS.CANCELED)
 
     def test_create_auto_long_buy_order_OK(self):

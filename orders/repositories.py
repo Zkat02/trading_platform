@@ -34,5 +34,5 @@ class OrderRepository(BaseRepository):
         None
         """
         order.closing_price = closing_price
-        self.set_status(order=order, status="closed")
+        self.set_status(order=order, status=Order.ORDER_TYPE.CLOSED)
         order.save()

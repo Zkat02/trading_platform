@@ -43,6 +43,7 @@ class InventoryService(BaseService):
         stock = self.stock_service.get_by_id(obj_id=stock_id)
         if self.stock_in_inventory_exists(user=user, stock=stock):
             return self.repository.filter_objs(user=user, stock=stock).first()
+        return None
 
     def stock_in_inventory_exists(self, user: User, stock: Stock) -> bool:
         """
@@ -81,7 +82,7 @@ class InventoryService(BaseService):
         user_id: int,
         stock_id: int,
         quantity: int,
-        action: Union[Order.USER_ACTION_TYPE.BUY, Order.USER_ACTION_TYPE.SELL],
+        action: Order.USER_ACTION_TYPE,
     ) -> None:
         """
         Update the quantity of an inventory.
