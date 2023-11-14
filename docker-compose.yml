@@ -10,6 +10,7 @@ services:
     ports:
       - ${POSTGRE_SQL_PORT}
   web:
+    container_name: web
     build: .
     command: ["./entrypoint.sh"]
     volumes:
@@ -29,6 +30,7 @@ services:
       - ${REDIS_PORT}
   celery-worker:
     build: .
+    restart: always
     command: ["./celery-worker.sh"]
     volumes:
       - .:/code
@@ -39,6 +41,7 @@ services:
       - redis
   celery-beat:
     build: .
+    restart: always
     command: ["./celery-beat.sh"]
     volumes:
       - .:/code
@@ -47,3 +50,15 @@ services:
     depends_on:
       - db
       - redis
+  localstack:
+    container_name: aws-localstack
+    image: localstack/localstack:latest
+    restart: always
+    hostname: localstack
+    ports:
+      - ${LOCALSTACK_PORTS}
+    env_file:
+      - .env
+    volumes:
+      - ./aws:/etc/localstack/init/ready.d
+      - "/var/run/docker.sock:/var/run/docker.sock"

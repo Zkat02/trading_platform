@@ -133,7 +133,6 @@ CELERY_IMPORTS = [
     "orders.tasks",
 ]
 
-
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -151,3 +150,23 @@ LOGGING = {
         },
     },
 }
+
+AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
+AWS_DEFAULT_REGION = os.environ.get("AWS_DEFAULT_REGION")
+AWS_SES_ENDPOINT_URL = os.environ.get("AWS_SES_ENDPOINT_URL")
+AWS_S3_ENDPOINT_URL = os.environ.get("AWS_S3_ENDPOINT_URL")
+AWS_DEFAULT_ACL = os.environ.get("AWS_DEFAULT_ACL")
+GATEWAY_LISTEN = os.environ.get("GATEWAY_LISTEN")
+LOCALSTACK_PORT = os.environ.get("LOCALSTACK_PORT")
+SERVICES = os.environ.get("SERVICES")
+
+DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+
+AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME")
+
+AWS_S3_USER_AVATARS_LOCATION = "users_avatars"  # directory in bucket S3
+AWS_S3_STOCKS_IMAGES_LOCATION = "stocks_images"
+
+MEDIA_URL = f"{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/"
+MEDIA_ROOT = MEDIA_URL
