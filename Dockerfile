@@ -1,4 +1,4 @@
-FROM python:3
+FROM python:3.11
 
 RUN pip install poetry
 
@@ -7,7 +7,6 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 COPY pyproject.toml poetry.lock /app/
-# COPY entrypoint.sh /app/
 
 RUN poetry install
 
