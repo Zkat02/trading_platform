@@ -78,3 +78,19 @@ class StockRepository(BaseRepository):
         """
         stock.available_quantity = new_value
         stock.save()
+
+    def find_by_symbol(self, symbol: str) -> Stock:
+        """
+        Find a stock by its symbol.
+
+        Args:
+        - symbol (str): The symbol of the stock.
+
+        Returns:
+        - Stock: The found stock or None if not found.
+        """
+        try:
+            stock = self.model.objects.get(symbol=symbol)
+            return stock
+        except Stock.DoesNotExist:
+            return None

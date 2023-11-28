@@ -9,6 +9,8 @@ services:
       - .env
     ports:
       - ${POSTGRE_SQL_PORT}
+    networks:
+      - kafka_docker_net
   web:
     container_name: web
     build: .
@@ -24,10 +26,14 @@ services:
       - redis
       - celery-worker
       - celery-beat
+    networks:
+      - kafka_docker_net
   redis:
     image: redis:latest
     ports:
       - ${REDIS_PORT}
+    networks:
+      - kafka_docker_net
   celery-worker:
     build: .
     restart: always
@@ -39,6 +45,8 @@ services:
     depends_on:
       - db
       - redis
+    networks:
+      - kafka_docker_net
   celery-beat:
     build: .
     restart: always
@@ -50,6 +58,8 @@ services:
     depends_on:
       - db
       - redis
+    networks:
+      - kafka_docker_net
   localstack:
     container_name: aws-localstack
     image: localstack/localstack:latest
@@ -62,3 +72,9 @@ services:
     volumes:
       - ./aws:/etc/localstack/init/ready.d
       - "/var/run/docker.sock:/var/run/docker.sock"
+    networks:
+      - kafka_docker_net
+networks:
+  kafka_docker_net:
+    external:
+      name: kafka_docker_net
