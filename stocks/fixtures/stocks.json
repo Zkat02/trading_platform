@@ -1,0 +1,112 @@
+[
+  {
+    "model": "stocks.stock",
+    "pk": 1,
+    "fields": {
+      "name": "Apple Inc.",
+      "symbol": "AAPL",
+      "price_per_unit_sail": "10.50",
+      "price_per_unit_buy": "9.50",
+      "available_quantity": "10"
+    }
+  },
+  {
+    "model": "stocks.stock",
+    "pk": 2,
+    "fields": {
+      "name": "Microsoft Corporation",
+      "symbol": "MSFT",
+      "price_per_unit_sail": "20.75",
+      "price_per_unit_buy": "19.00",
+      "available_quantity": "10"
+    }
+  },
+  {
+    "model": "stocks.stock",
+    "pk": 3,
+    "fields": {
+      "name": "Amazon.com Inc.",
+      "symbol": "AMZN",
+      "price_per_unit_sail": "15.25",
+      "price_per_unit_buy": "14.00",
+      "available_quantity": "10"
+    }
+  },
+  {
+    "model": "stocks.stock",
+    "pk": 4,
+    "fields": {
+      "name": "Google LLC",
+      "symbol": "GOOGL",
+      "price_per_unit_sail": "5.80",
+      "price_per_unit_buy": "6.20",
+      "available_quantity": "10"
+    }
+  },
+  {
+    "model": "stocks.stock",
+    "pk": 5,
+    "fields": {
+      "name": "Facebook Inc.",
+      "symbol": "FB",
+      "price_per_unit_sail": "30.40",
+      "price_per_unit_buy": "28.90",
+      "available_quantity": "10"
+    }
+  },
+  {
+    "model": "stocks.stock",
+    "pk": 6,
+    "fields": {
+      "name": "Tesla Inc.",
+      "symbol": "TSLA",
+      "price_per_unit_sail": "12.60",
+      "price_per_unit_buy": "13.20",
+      "available_quantity": "10"
+    }
+  },
+  {
+    "model": "stocks.stock",
+    "pk": 7,
+    "fields": {
+      "name": "Netflix Inc.",
+      "symbol": "NFLX",
+      "price_per_unit_sail": "8.90",
+      "price_per_unit_buy": "9.10",
+      "available_quantity": "10"
+    }
+  },
+  {
+    "model": "stocks.stock",
+    "pk": 8,
+    "fields": {
+      "name": "Alphabet Inc.",
+      "symbol": "GOOG",
+      "price_per_unit_sail": "25.00",
+      "price_per_unit_buy": "24.50",
+      "available_quantity": "10"
+    }
+  },
+  {
+    "model": "stocks.stock",
+    "pk": 9,
+    "fields": {
+      "name": "NVIDIA Corporation",
+      "symbol": "NVDA",
+      "price_per_unit_sail": "17.30",
+      "price_per_unit_buy": "16.80",
+      "available_quantity": "10"
+    }
+  },
+  {
+    "model": "stocks.stock",
+    "pk": 10,
+    "fields": {
+      "name": "PayPal Holdings Inc.",
+      "symbol": "PYPL",
+      "price_per_unit_sail": "22.75",
+      "price_per_unit_buy": "21.50",
+      "available_quantity": "10"
+    }
+  }
+]
